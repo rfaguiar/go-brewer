@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/gorilla/mux"
 	"html/template"
 	"log"
 	"net/http"
@@ -9,13 +10,16 @@ import (
 )
 
 func main() {
-	fs := http.FileServer(http.Dir(filepath.Join("src", "templates", "static")))
-	http.Handle("/static/", http.StripPrefix("/static/", fs))
+	r := mux.NewRouter().StrictSlash(true)
 
-	http.HandleFunc("/", ShowLogin)
+	staticDir := http.Dir(filepath.Join("src", "templates", "static"))
+	r.PathPrefix("/static/").
+		Handler(http.StripPrefix("/static/", http.FileServer(staticDir)))
+
+	r.HandleFunc("/", ShowLogin).Methods(http.MethodGet)
 
 	log.Print("Server startup and listen http://localhost:4000")
-	log.Fatal(http.ListenAndServe(":4000", nil))
+	log.Fatal(http.ListenAndServe(":4000", r))
 }
 
 func ShowLogin(w http.ResponseWriter, r *http.Request) {
